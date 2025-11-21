@@ -46,6 +46,7 @@ socketHandler(io);
 app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/messages', chatRoutes);
+app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
