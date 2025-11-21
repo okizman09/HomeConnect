@@ -97,19 +97,19 @@ export const listingsAPI = {
 export const messagesAPI = {
   getConversations: () => apiCall('/messages/conversations'),
 
-  getMessages: (conversationId) =>
-    apiCall(`/messages/conversations/${conversationId}`),
+  getMessages: (userId) =>
+    apiCall(`/messages/${userId}`),
 
-  sendMessage: (conversationId, message) =>
-    apiCall(`/messages/conversations/${conversationId}`, {
+  sendMessage: (userId, message) =>
+    apiCall('/messages', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ receiverId: userId, message }),
     }),
 
   createConversation: (userId) =>
-    apiCall('/messages/conversations', {
+    apiCall('/messages', {
       method: 'POST',
-      body: JSON.stringify({ participantId: userId }),
+      body: JSON.stringify({ receiverId: userId, message: 'Hi' }),
     }),
 };
 

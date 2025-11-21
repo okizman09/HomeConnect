@@ -126,11 +126,11 @@ const CreateListingPage = ({ onNavigate }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8">
       <div className="container mx-auto px-4 max-w-3xl">
-        <h1 className="text-3xl font-bold mb-6">Create New Listing</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">Create New Listing</h1>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
             <div>
@@ -141,7 +141,7 @@ const CreateListingPage = ({ onNavigate }) => {
                 type="text"
                 name="title"
                 required
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                 placeholder="e.g., Modern 2-Bedroom Apartment in Ikeja"
                 value={values.title}
                 onChange={handleChange}
@@ -157,7 +157,7 @@ const CreateListingPage = ({ onNavigate }) => {
                 name="description"
                 required
                 rows={4}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                 placeholder="Describe the property, amenities, and neighborhood..."
                 value={values.description}
                 onChange={handleChange}
@@ -174,7 +174,7 @@ const CreateListingPage = ({ onNavigate }) => {
                   type="text"
                   name="location"
                   required
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                   placeholder="e.g., Ikeja, Lagos"
                   value={values.location}
                   onChange={handleChange}
@@ -189,7 +189,7 @@ const CreateListingPage = ({ onNavigate }) => {
                   type="number"
                   name="price"
                   required
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                   placeholder="500000"
                   value={values.price}
                   onChange={handleChange}
@@ -205,7 +205,7 @@ const CreateListingPage = ({ onNavigate }) => {
                 </label>
                 <select
                   name="propertyType"
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                   value={values.propertyType}
                   onChange={handleChange}
                 >
@@ -225,7 +225,7 @@ const CreateListingPage = ({ onNavigate }) => {
                   type="number"
                   name="occupancyLimit"
                   required
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
                   placeholder="e.g., 4"
                   value={values.occupancyLimit}
                   onChange={handleChange}
@@ -236,17 +236,17 @@ const CreateListingPage = ({ onNavigate }) => {
             {/* Image Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Property Images
+                Property Images (at least 1)
               </label>
 
               {uploadError && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
                   {uploadError}
                 </div>
               )}
 
               {/* Drop Zone */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-500 transition cursor-pointer">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 md:p-8 text-center hover:border-indigo-500 transition cursor-pointer bg-gray-50">
                 <input
                   type="file"
                   multiple
@@ -255,12 +255,12 @@ const CreateListingPage = ({ onNavigate }) => {
                   id="image-input"
                   onChange={handleFileSelect}
                 />
-                <label htmlFor="image-input" className="cursor-pointer">
-                  <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">
+                <label htmlFor="image-input" className="cursor-pointer block">
+                  <Upload className="w-10 h-10 md:w-12 md:h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-sm md:text-base text-gray-600 mb-1">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-sm text-gray-500">PNG, JPG up to 10MB each</p>
+                  <p className="text-xs md:text-sm text-gray-500">PNG, JPG up to 10MB each</p>
                 </label>
               </div>
 
@@ -270,7 +270,7 @@ const CreateListingPage = ({ onNavigate }) => {
                   <p className="text-sm font-medium text-gray-700 mb-2">
                     {images.length} image(s) selected
                   </p>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
                     {imagePreviewUrls.map((url, index) => (
                       <div
                         key={index}
@@ -279,14 +279,14 @@ const CreateListingPage = ({ onNavigate }) => {
                         <img
                           src={url}
                           alt={`Preview ${index + 1}`}
-                          className="w-full h-20 object-cover rounded border"
+                          className="w-full h-20 md:h-24 object-cover rounded border hover:border-indigo-500 transition"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"
+                          className="absolute -top-2 -right-2 bg-red-600 text-white p-1 md:p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition shadow-lg hover:bg-red-700"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="w-3 h-3 md:w-4 md:h-4" />
                         </button>
                       </div>
                     ))}
@@ -299,7 +299,7 @@ const CreateListingPage = ({ onNavigate }) => {
             <button
               type="submit"
               disabled={loading || uploadingImages}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm md:text-base"
             >
               {loading || uploadingImages ? 'Creating Listing...' : 'Create Listing'}
             </button>

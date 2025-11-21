@@ -11,8 +11,8 @@ exports.getChatHistory = async (req, res) => {
 
     const messages = await Chat.find({
       $or: [
-        { senderId: req.user.id, receiverId: userId },
-        { senderId: userId, receiverId: req.user.id }
+        { senderId: req.user._id, receiverId: userId },
+        { senderId: userId, receiverId: req.user._id }
       ]
     }).sort({ timestamp: 1 })
       .populate('senderId', 'name')
@@ -38,7 +38,7 @@ exports.sendMessage = async (req, res) => {
     const { receiverId, message, listingId } = req.body;
 
     const chat = await Chat.create({
-      senderId: req.user.id,
+      senderId: req.user._id,
       receiverId,
       message,
       listingId

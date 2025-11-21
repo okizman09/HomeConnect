@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X } from 'lucide-react';
+import { MessageSquare, Send, X, ArrowLeft } from 'lucide-react';
 import { messagesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatTime } from '../utils';
@@ -39,10 +39,6 @@ const ChatsPage = () => {
       }
     });
 
-    socketRef.current.on('userTyping', (data) => {
-      // Handle typing indicator here
-    });
-
     return () => {
       socketRef.current?.disconnect();
     };
@@ -54,9 +50,10 @@ const ChatsPage = () => {
       try {
         setLoading(true);
         const data = await messagesAPI.getConversations();
-        setConversations(data || []);
+        setConversations(data?.conversations || data || []);
       } catch (err) {
         setError('Failed to load conversations');
+        console.error('Error fetching conversations:', err);
       } finally {
         setLoading(false);
       }
@@ -71,10 +68,12 @@ const ChatsPage = () => {
 
     const fetchMessages = async () => {
       try {
+        setError('');
         const data = await messagesAPI.getMessages(selectedChat.userId);
-        setMessages(data || []);
+        setMessages(data?.messages || []);
       } catch (err) {
         setError('Failed to load messages');
+        console.error('Error fetching messages:', err);
       }
     };
 
@@ -103,6 +102,7 @@ const ChatsPage = () => {
       setMessage('');
     } catch (err) {
       setError('Failed to send message');
+      console.error('Error sending message:', err);
     }
   };
 
@@ -118,45 +118,46 @@ const ChatsPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Messages</h1>
+      <div className="container mx-auto px-4 py-4 md:py-8 h-[calc(100vh-80px)]">
+        <div className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col md:flex-row">
+          {/* Conversation List */}
+          <div
+            className={`w-full md:w-1/3 border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ${
+              selectedChat ? 'hidden md:flex' : 'flex'
+            }`}
+          >
+            {/* Header */}
+            <div className="p-4 border-b bg-white flex-shrink-0">
+              <h2 className="text-xl md:text-2xl font-bold text-gray-900">Messages</h2>
+            </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-            {error}
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow-md overflow-hidden" style={{ height: '600px' }}>
-          <div className="flex h-full">
-            {/* Conversation List */}
-            <div className="w-1/3 border-r overflow-y-auto bg-gray-50">
+            {/* Conversations List */}
+            <div className="flex-1 overflow-y-auto bg-gray-50">
               {loading ? (
-                <div className="p-4 text-center text-gray-600">Loading...</div>
+                <div className="p-4 text-center text-gray-600">Loading conversations...</div>
               ) : conversations.length > 0 ? (
                 conversations.map((conv) => (
                   <div
                     key={conv._id || conv.userId}
                     onClick={() => setSelectedChat(conv)}
                     className={`p-4 border-b cursor-pointer hover:bg-gray-100 transition ${
-                      selectedChat?.userId === conv.userId ? 'bg-indigo-50' : ''
+                      selectedChat?.userId === conv.userId ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
-                      <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">
+                      <div className="w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
                         {(conv.userName || 'U')[0].toUpperCase()}
                       </div>
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-baseline">
-                          <h3 className="font-semibold text-gray-900">
+                        <div className="flex justify-between items-baseline gap-2">
+                          <h3 className="font-semibold text-gray-900 truncate">
                             {conv.userName || 'Unknown'}
                           </h3>
-                          <span className="text-xs text-gray-500">
-                            {conv.lastTimestamp &&
-                              formatTime(conv.lastTimestamp)}
+                          <span className="text-xs text-gray-500 flex-shrink-0">
+                            {conv.lastTimestamp && formatTime(conv.lastTimestamp)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 truncate">
@@ -166,7 +167,7 @@ const ChatsPage = () => {
 
                       {/* Unread Badge */}
                       {conv.unread > 0 && (
-                        <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        <div className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
                           {conv.unread}
                         </div>
                       )}
@@ -175,51 +176,67 @@ const ChatsPage = () => {
                 ))
               ) : (
                 <div className="p-4 text-center text-gray-600">
-                  No conversations yet
+                  No conversations yet. Start messaging landlords!
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Chat Window */}
-            <div className="flex-1 flex flex-col">
-              {selectedChat ? (
-                <>
-                  {/* Header */}
-                  <div className="p-4 border-b bg-white">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold">
-                          {(selectedChat.userName || 'U')[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">
-                            {selectedChat.userName || 'User'}
-                          </h3>
-                          <p className="text-xs text-gray-500">Active now</p>
-                        </div>
-                      </div>
+          {/* Chat Window */}
+          <div
+            className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
+              selectedChat ? 'flex' : 'hidden md:flex'
+            }`}
+          >
+            {selectedChat ? (
+              <>
+                {/* Chat Header */}
+                <div className="p-4 border-b bg-white flex-shrink-0 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      onClick={() => setSelectedChat(null)}
+                      className="md:hidden text-gray-500 hover:text-gray-700"
+                    >
+                      <ArrowLeft className="w-6 h-6" />
+                    </button>
+                    <div className="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0">
+                      {(selectedChat.userName || 'U')[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-gray-900 truncate">
+                        {selectedChat.userName || 'User'}
+                      </h3>
+                      <p className="text-xs text-gray-500">Active now</p>
                     </div>
                   </div>
+                </div>
 
-                  {/* Messages */}
-                  <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-                    <div className="space-y-4">
-                      {messages.length > 0 ? (
-                        messages.map((msg) => (
+                {/* Messages */}
+                <div className="flex-1 p-4 overflow-y-auto bg-gray-50 min-h-0">
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded">
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    {messages.length > 0 ? (
+                      messages.map((msg) => {
+                        // Handle both populated objects and plain IDs
+                        const senderId = typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId;
+                        const isCurrentUser = senderId === user.id || senderId === user._id || String(senderId) === String(user.id);
+                        
+                        return (
                           <div
                             key={msg._id}
-                            className={`flex ${
-                              msg.senderId === user.id
-                                ? 'justify-end'
-                                : 'justify-start'
-                            }`}
+                            className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
                           >
-                            <div className="max-w-xs">
+                            <div className="max-w-xs md:max-w-md">
                               <div
-                                className={`px-4 py-2 rounded-lg ${
-                                  msg.senderId === user.id
-                                    ? 'bg-indigo-600 text-white'
-                                    : 'bg-white text-gray-900 border border-gray-200'
+                                className={`px-4 py-2 rounded-lg text-sm md:text-base ${
+                                  isCurrentUser
+                                    ? 'bg-indigo-600 text-white rounded-br-none'
+                                    : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
                                 }`}
                               >
                                 {msg.message}
@@ -229,49 +246,48 @@ const ChatsPage = () => {
                               </p>
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          No messages yet. Start the conversation!
-                        </div>
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </div>
-
-                  {/* Input */}
-                  <div className="p-4 border-t bg-white">
-                    <div className="flex space-x-2">
-                      <input
-                        type="text"
-                        placeholder="Type a message..."
-                        className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        onKeyPress={(e) =>
-                          e.key === 'Enter' && handleSendMessage()
-                        }
-                        onFocus={() => handleTyping(true)}
-                        onBlur={() => handleTyping(false)}
-                      />
-                      <button
-                        onClick={handleSendMessage}
-                        className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-                      >
-                        <Send className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p>Select a conversation to start messaging</p>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center text-gray-500 py-8">
+                        No messages yet. Start the conversation!
+                      </div>
+                    )}
+                    <div ref={messagesEndRef} />
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Input */}
+                <div className="p-4 border-t bg-white flex-shrink-0">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      placeholder="Type a message..."
+                      className="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm md:text-base"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                      onFocus={() => handleTyping(true)}
+                      onBlur={() => handleTyping(false)}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!message.trim()}
+                      className="bg-indigo-600 text-white px-4 md:px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:bg-gray-400 transition flex-shrink-0"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="hidden md:flex items-center justify-center h-full text-gray-500">
+                <div className="text-center">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg">Select a conversation to start messaging</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

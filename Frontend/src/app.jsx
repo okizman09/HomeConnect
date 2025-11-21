@@ -8,6 +8,8 @@ import ListingsPage from './pages/ListingsPage';
 import ListingDetailPage from './pages/ListingDetailPage';
 import ChatsPage from './pages/ChatsPage';
 import CreateListingPage from './pages/CreateListingPage';
+import LandlordDashboard from './pages/LandlordDashboard';
+import TenantDashboard from './pages/TenantDashboard';
 import { Home } from 'lucide-react';
 
 const AppContent = () => {
@@ -56,8 +58,19 @@ const AppContent = () => {
         return <CreateListingPage onNavigate={setCurrentPage} />;
       case 'chats':
         return <ChatsPage />;
+      case 'dashboard':
+        if (user.role === 'landlord') {
+          return <LandlordDashboard onNavigate={setCurrentPage} />;
+        } else if (user.role === 'tenant') {
+          return <TenantDashboard onNavigate={setCurrentPage} />;
+        }
+        return <ListingsPage onSelectListing={setSelectedListing} />;
       case 'listings':
       default:
+        // Default page based on role
+        if (user.role === 'landlord') {
+          return <LandlordDashboard onNavigate={setCurrentPage} />;
+        }
         return <ListingsPage onSelectListing={setSelectedListing} />;
     }
   };

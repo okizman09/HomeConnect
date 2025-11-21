@@ -26,14 +26,24 @@ const server = http.createServer(app);
 // Initialize Socket.io
 const io = socketIO(server, {
   cors: {
-    origin: process.env.FRONTEND_URL,
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL
+    ],
     methods: ['GET', 'POST']
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL
+  ],
   credentials: true
 }));
 app.use(express.json());
