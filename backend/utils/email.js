@@ -29,7 +29,8 @@ exports.sendEmail = async (options) => {
       from: 'HomeConnect <onboarding@resend.dev>',
       to: options.email,
       subject: options.subject,
-      html: options.message
+      html: options.message,
+      text: options.text || options.message.replace(/<[^>]*>?/gm, '') // Fallback to stripped HTML
     });
     console.log('Email sent via Resend:', data);
   } catch (error) {

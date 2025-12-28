@@ -177,7 +177,7 @@ exports.forgotPassword = async (req, res, next) => {
     const message = `
       <h1>You have requested a password reset</h1>
       <p>Please click on the link below to reset your password within 10 minutes:</p>
-      <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+      <a href="${resetUrl}">${resetUrl}</a>
       <p>If you didn't request this, please ignore this email.</p>
     `;
 
@@ -185,7 +185,8 @@ exports.forgotPassword = async (req, res, next) => {
       await sendEmail({
         email: user.email,
         subject: 'Password Reset Request',
-        message
+        message,
+        text: `You have requested a password reset. Please open this link to reset your password: ${resetUrl}`
       });
 
       res.status(200).json({ success: true, data: 'Email sent' });
