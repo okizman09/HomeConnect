@@ -215,6 +215,11 @@ exports.forgotPassword = async (req, res, next) => {
 // @access  Public
 exports.resetPassword = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
     // Get hashed token
     const resetPasswordToken = crypto
       .createHash('sha256')
@@ -238,7 +243,9 @@ exports.resetPassword = async (req, res, next) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpire = undefined;
 
-    await user.save();
+    // Save with validateBeforeSave: false to fix corrupted accounts (missing fields)
+    // while still hashing the password via pre-save hook
+    await user.save({ validateBeforeSave: false });
 
     // Generate new token for auto-login
     const token = generateToken(user._id);

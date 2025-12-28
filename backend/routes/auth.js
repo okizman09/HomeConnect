@@ -24,7 +24,17 @@ router.post(
 
 router.post('/login', login);
 router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resettoken', resetPassword);
+router.put(
+  '/resetpassword/:resettoken',
+  [
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters')
+      .matches(/^(?=.*[A-Z])(?=.*[!@#$&*])/)
+      .withMessage('Password must contain at least one uppercase letter and one special character (!@#$&*)')
+  ],
+  resetPassword
+);
 router.get('/me', protect, getMe);
 
 module.exports = router;
