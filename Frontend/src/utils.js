@@ -38,7 +38,8 @@ export const validateEmail = (email) => {
 };
 
 export const validatePassword = (password) => {
-  return password.length >= 8;
+  const pattern = /^(?=.*[A-Z])(?=.*[!@#$&*]).{8,}$/;
+  return pattern.test(password);
 };
 
 export const validatePhone = (phone) => {

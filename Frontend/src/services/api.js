@@ -52,6 +52,18 @@ export const authAPI = {
   },
 
   getCurrentUser: () => apiCall('/auth/me'),
+
+  forgotPassword: (email) =>
+    apiCall('/auth/forgotpassword', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  resetPassword: (token, password) =>
+    apiCall(`/auth/resetpassword/${token}`, {
+      method: 'PUT',
+      body: JSON.stringify({ password }),
+    }),
 };
 
 // Listings endpoints

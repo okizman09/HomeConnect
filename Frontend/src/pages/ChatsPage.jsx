@@ -39,6 +39,13 @@ const ChatsPage = () => {
       }
     });
 
+    // Listen for message confirmation (sent by current user)
+    socketRef.current.on('messageSent', ({ chat }) => {
+      if (selectedChat && chat.receiverId === selectedChat.userId) {
+        setMessages((prev) => [...prev, chat]);
+      }
+    });
+
     return () => {
       socketRef.current?.disconnect();
     };
@@ -95,9 +102,6 @@ const ChatsPage = () => {
         receiverId: selectedChat.userId,
         message: message.trim(),
       });
-
-      // Also save via API
-      await messagesAPI.sendMessage(selectedChat.userId, message.trim());
 
       setMessage('');
     } catch (err) {

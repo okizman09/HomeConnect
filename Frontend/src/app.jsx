@@ -10,12 +10,23 @@ import ChatsPage from './pages/ChatsPage';
 import CreateListingPage from './pages/CreateListingPage';
 import LandlordDashboard from './pages/LandlordDashboard';
 import TenantDashboard from './pages/TenantDashboard';
+
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { Home } from 'lucide-react';
 
 const AppContent = () => {
   const [currentPage, setCurrentPage] = useState('landing');
   const [selectedListing, setSelectedListing] = useState(null);
   const { user, loading } = useAuth();
+
+  // Check URL on mount for reset password link
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('oobCode')) {
+      setCurrentPage('reset-password');
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -44,9 +55,15 @@ const AppContent = () => {
       switch (currentPage) {
         case 'register':
           return <RegisterPage onNavigate={setCurrentPage} />;
+
         case 'login':
           return <LoginPage onNavigate={setCurrentPage} />;
+        case 'forgot-password':
+          return <ForgotPassword onNavigate={setCurrentPage} />;
+        case 'reset-password':
+          return <ResetPassword onNavigate={setCurrentPage} />;
         case 'landing':
+
         default:
           return <LandingPage onNavigate={setCurrentPage} />;
       }

@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.login(email, password);
       const { token, user: userData } = response;
-      
+
       localStorage.setItem("token", token);
       localStorage.setItem("authUser", JSON.stringify(userData));
       setUser(userData);
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.register(userData);
       const { token, user: newUser } = response;
-      
+
       localStorage.setItem("token", token);
       localStorage.setItem("authUser", JSON.stringify(newUser));
       setUser(newUser);
@@ -127,6 +127,28 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  // Forgot Password (send email)
+  const resetPassword = useCallback(async (email) => {
+    try {
+      setError(null);
+      await authAPI.forgotPassword(email);
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
+  // Reset Password (new password)
+  const confirmPasswordReset = useCallback(async (token, password) => {
+    try {
+      setError(null);
+      await authAPI.resetPassword(token, password);
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    }
+  }, []);
+
   const value = {
     user,
     loading,
@@ -135,6 +157,8 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     updateProfile,
+    resetPassword,
+    confirmPasswordReset,
     isAuthenticated: !!user,
     role: user?.role,
   };
