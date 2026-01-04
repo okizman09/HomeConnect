@@ -10,6 +10,7 @@ import ChatsPage from './pages/ChatsPage';
 import CreateListingPage from './pages/CreateListingPage';
 import LandlordDashboard from './pages/LandlordDashboard';
 import TenantDashboard from './pages/TenantDashboard';
+import ProfileSettings from './pages/ProfileSettings';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -83,6 +84,9 @@ const AppContent = () => {
         }
         return <ListingsPage onSelectListing={setSelectedListing} />;
       case 'listings':
+        return <ListingsPage onSelectListing={setSelectedListing} />;
+      case 'profile-settings': // Added route for ProfileSettings
+        return <ProfileSettings onNavigate={setCurrentPage} />;
       default:
         // Default page based on role
         if (user.role === 'landlord') {

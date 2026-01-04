@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, DollarSign, Users, MessageSquare, X, Send, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { MapPin, DollarSign, Users, MessageSquare, X, Send, ChevronLeft, ChevronRight, Maximize2, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { messagesAPI } from '../services/api';
+import { messagesAPI, usersAPI } from '../services/api';
 import { formatPrice, formatDate, formatTime } from '../utils';
 import { PROPERTY_LABELS } from '../constants';
 
@@ -14,7 +14,26 @@ const ListingDetailPage = ({ listing, onBack }) => {
   const [error, setError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const messagesEndRef = useRef(null);
+
+  // Check if listing is saved
+  useEffect(() => {
+    const checkSavedStatus = async () => {
+      if (user) {
+        try {
+          const response = await usersAPI.getSavedListings();
+          if (response.success) {
+            const savedIds = response.savedListings.map(l => l._id);
+            setIsSaved(savedIds.includes(listing._id));
+          }
+        } catch (err) {
+          console.error("Failed to check saved status", err);
+        }
+      }
+    };
+    checkSavedStatus();
+  }, [user, listing._id]);
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -49,14 +68,26 @@ const ListingDetailPage = ({ listing, onBack }) => {
     }
   };
 
+  const handleToggleSave = async () => {
+    if (!user) return;
+    try {
+      const response = await usersAPI.toggleSavedListing(listing._id);
+      if (response.success) {
+        setIsSaved(!isSaved);
+      }
+    } catch (err) {
+      console.error("Failed to toggle save", err);
+    }
+  };
+
   const handleStartChat = async () => {
     try {
       setLoading(true);
       setError('');
-      
+
       // Get landlord ID
       const landlordId = listing.landlordId._id || listing.landlordId;
-      
+
       // Fetch messages with landlord
       const fetchedMessages = await messagesAPI.getMessages(landlordId);
       setMessages(fetchedMessages?.messages || []);
@@ -73,8 +104,8 @@ const ListingDetailPage = ({ listing, onBack }) => {
     if (!message.trim()) return;
 
     try {
-      const landlorId = listing.landlordId._id || listing.landlordId;
-      await messagesAPI.sendMessage(landlorId, message);
+      const landlordId = listing.landlordId._id || listing.landlordId;
+      await messagesAPI.sendMessage(landlordId, message);
 
       setMessages([
         ...messages,
@@ -106,6 +137,7 @@ const ListingDetailPage = ({ listing, onBack }) => {
           ← Back to Listings
         </button>
 
+
         {/* Main Content */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           {/* Image Gallery */}
@@ -115,6 +147,17 @@ const ListingDetailPage = ({ listing, onBack }) => {
               alt={`${listing.title} ${currentImageIndex + 1}`}
               className="w-full h-64 md:h-96 object-cover"
             />
+
+            {/* Save Button Overlay */}
+            {user && (
+              <button
+                onClick={handleToggleSave}
+                className={`absolute top-4 right-4 z-20 p-3 rounded-full shadow-lg transition ${isSaved ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-gray-400 hover:text-red-500 hover:bg-gray-50'}`}
+                title={isSaved ? "Unsave Property" : "Save Property"}
+              >
+                <Heart className={`w-6 h-6 ${isSaved ? 'fill-current' : ''}`} />
+              </button>
+            )}
 
             {/* Image Navigation Controls */}
             {images.length > 1 && (
@@ -157,11 +200,10 @@ const ListingDetailPage = ({ listing, onBack }) => {
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`h-2 md:h-3 rounded-full transition flex-shrink-0 ${
-                        index === currentImageIndex
-                          ? 'bg-white w-6 md:w-8'
-                          : 'bg-white bg-opacity-50 w-2 md:w-3 hover:bg-opacity-75'
-                      }`}
+                      className={`h-2 md:h-3 rounded-full transition flex-shrink-0 ${index === currentImageIndex
+                        ? 'bg-white w-6 md:w-8'
+                        : 'bg-white bg-opacity-50 w-2 md:w-3 hover:bg-opacity-75'
+                        }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
                   ))}
@@ -245,7 +287,7 @@ const ListingDetailPage = ({ listing, onBack }) => {
             </div>
 
             {/* Contact CTA */}
-            {user && user.role === 'tenant' && (
+            {user && (user.role?.toLowerCase() === 'tenant') && (
               <button
                 onClick={handleStartChat}
                 disabled={loading}
@@ -340,17 +382,15 @@ const ListingDetailPage = ({ listing, onBack }) => {
                     {messages.map((msg) => (
                       <div
                         key={msg._id}
-                        className={`flex ${
-                          msg.senderId === user.id ? 'justify-end' : 'justify-start'
-                        }`}
+                        className={`flex ${msg.senderId === user.id ? 'justify-end' : 'justify-start'
+                          }`}
                       >
                         <div className="max-w-xs md:max-w-md lg:max-w-lg">
                           <div
-                            className={`px-4 py-2 rounded-lg text-sm md:text-base ${
-                              msg.senderId === user.id
-                                ? 'bg-indigo-600 text-white rounded-br-none'
-                                : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
-                            }`}
+                            className={`px-4 py-2 rounded-lg text-sm md:text-base ${msg.senderId === user.id
+                              ? 'bg-indigo-600 text-white rounded-br-none'
+                              : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
+                              }`}
                           >
                             {msg.message}
                           </div>

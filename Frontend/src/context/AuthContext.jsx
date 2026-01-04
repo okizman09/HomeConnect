@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           setLoading(true);
-          const userData = await authAPI.getCurrentUser();
+          const { user: userData } = await authAPI.getCurrentUser();
           setUser(userData);
           setError(null);
         } catch (err) {

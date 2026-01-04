@@ -19,6 +19,7 @@ const authRoutes = require('./routes/auth');
 const listingRoutes = require('./routes/listings');
 const chatRoutes = require('./routes/chat');
 const uploadRoutes = require('./routes/upload');
+const userRoutes = require('./routes/users');
 
 const app = express();
 const server = http.createServer(app);
@@ -54,6 +55,7 @@ socketHandler(io);
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/messages', chatRoutes);
 app.use('/api/chat', chatRoutes);

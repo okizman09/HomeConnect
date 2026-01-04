@@ -10,7 +10,7 @@ A modern digital platform that efficiently connects Landlords posting vacant pro
 
 **Document Version:** 3.0 (Unverified Connection)
 
-**Last Updated:** November 20, 2025
+**Last Updated:** January 3, 2026
 
 ### 🎯 Product Goal
 
@@ -138,26 +138,32 @@ Each property listing includes:
 
 #### FUN-006: In-App Chat
 - **Persistent Chat Interface:** Conversations stored in database
-- **Features:**
-  - Direct messaging between Tenant and Landlord
-  - Access from listing detail page
-  - Message history retrieval
-  - Conversation management
-  - Unread message tracking
-  - Real-time messaging via Socket.io
+- **Real-Time Features:**
+  - **Instant Messaging:** Powered by Socket.io for immediate delivery
+  - **Typing Indicators:** See when the other person is typing
+  - **Live Status:** "Active now" indicators
+  - **Message Acknowledgments:** Visual confirmation of sent messages
+- **UI/UX:**
+  - **Responsive Design:** Split-view on desktop, full-screen chat on mobile
+  - **Unread Badges:** Notification counters in the Navbar and conversation list
+  - **Rich Message Bubbles:** Clear distinction between sent and received messages
+  - **Time Formatting:** "Just now", "5 min ago", "10:30 AM" timestamps
+- **Integration:**
+  - **Direct Access:** "Contact Landlord" button on Listing Details
+  - **Context Aware:** Messages linked to specific users
 
 **Endpoints:**
-- `GET /api/messages/conversations` - List all conversations
-- `GET /api/messages/conversations/:userId` - Get chat history with specific user
-- `POST /api/messages/conversations` - Send a message
+- `GET /api/messages/conversations` - List all conversations with unread counts
+- `GET /api/messages/conversations/:userId` - Get full chat history
+- `POST /api/messages` - Send a new message
 
 **Socket.io Events:**
-- `join` - User joins a conversation room
-- `sendMessage` - Send a message in real-time
-- `typing` - Show typing indicator
-- `disconnect` - User leaves conversation
-- `messageSent` - Acknowledgment of message delivery
-- `messageError` - Error handling
+- `join` - specific room connection
+- `sendMessage` - client-to-server message
+- `receiveMessage` - server-to-client delivery
+- `typing` - real-time status update
+- `messageSent` - delivery confirmation
+- `disconnect` - cleanup
 
 #### FUN-007: Basic Notifications
 - **Email Notifications:** Triggered on new chat messages
@@ -713,5 +719,5 @@ For issues, questions, or contributions:
 ---
 
 **Version:** 3.0 (MVP - Unverified Connection)  
-**Last Updated:** November 20, 2025  
+**Last Updated:** January 3, 2026  
 **Status:** Ready for Deployment

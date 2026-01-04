@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Search, MessageSquare, Plus, LogOut, User, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Home, Search, MessageSquare, Plus, LogOut, User, LayoutDashboard, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = ({ currentPage, onNavigate }) => {
@@ -93,13 +93,22 @@ const Navbar = ({ currentPage, onNavigate }) => {
               </span>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-1 hover:text-indigo-200 transition"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <div className="hidden sm:flex items-center border-l border-indigo-500 pl-4 space-x-2">
+              <button
+                onClick={() => handleNavigate('profile-settings')}
+                className="flex items-center space-x-1 hover:text-indigo-200 transition"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-1 hover:text-indigo-200 transition"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
 
             {/* Mobile Menu Toggle */}
             <button
@@ -157,6 +166,23 @@ const Navbar = ({ currentPage, onNavigate }) => {
               <MessageSquare className="w-5 h-5" />
               <span>Messages</span>
             </button>
+
+            <div className="border-t border-indigo-500 my-2 pt-2">
+              <button
+                onClick={() => handleNavigate('profile-settings')}
+                className={`w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 ${isActive('profile-settings')}`}
+              >
+                <Settings className="w-5 h-5" />
+                <span>Settings</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 text-indigo-100 hover:text-white hover:bg-indigo-700"
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

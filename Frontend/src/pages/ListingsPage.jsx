@@ -1,11 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
-import { MapPin, DollarSign, Users, Filter, Search, X } from 'lucide-react';
-import { listingsAPI } from '../services/api';
+import { MapPin, DollarSign, Users, Filter, Search, X, Heart } from 'lucide-react';
+import { listingsAPI, usersAPI } from '../services/api';
 import { PROPERTY_TYPES, PROPERTY_LABELS } from '../constants';
 import { formatPrice } from '../utils';
 import { useFetch } from '../hooks';
+import { useAuth } from '../context/AuthContext';
 
 const ListingsPage = ({ onSelectListing }) => {
+  const { user } = useAuth();
   const [filters, setFilters] = useState({
     location: '',
     propertyType: '',
@@ -14,6 +17,7 @@ const ListingsPage = ({ onSelectListing }) => {
   });
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [savedListingIds, setSavedListingIds] = useState([]);
 
   const { data: listingsResponse, loading, error, execute: fetchListings } = useFetch(
     () => listingsAPI.getAll(),
@@ -21,6 +25,22 @@ const ListingsPage = ({ onSelectListing }) => {
   );
 
   const listings = listingsResponse?.listings || [];
+
+  useEffect(() => {
+    const fetchSavedListings = async () => {
+      if (user) {
+        try {
+          const response = await usersAPI.getSavedListings();
+          if (response.success) {
+            setSavedListingIds(response.savedListings.map(l => l._id));
+          }
+        } catch (err) {
+          console.error("Failed to fetch saved listings", err);
+        }
+      }
+    };
+    fetchSavedListings();
+  }, [user]);
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -187,6 +207,30 @@ const ListingsPage = ({ onSelectListing }) => {
                     <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                       {listing.images.length} photos
                     </div>
+                  )}
+                  {user && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // Handle toggle save
+                        const isSaved = savedListingIds.includes(listing._id);
+                        usersAPI.toggleSavedListing(listing._id)
+                          .then(response => {
+                            if (response.success) {
+                              setSavedListingIds(prev =>
+                                isSaved
+                                  ? prev.filter(id => id !== listing._id)
+                                  : [...prev, listing._id]
+                              );
+                            }
+                          })
+                          .catch(console.error);
+                      }}
+                      className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition ${savedListingIds.includes(listing._id) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-gray-400 hover:text-red-500 hover:bg-gray-50'}`}
+                      title={savedListingIds.includes(listing._id) ? "Unsave Property" : "Save Property"}
+                    >
+                      <Heart className={`w-4 h-4 ${savedListingIds.includes(listing._id) ? 'fill-current' : ''}`} />
+                    </button>
                   )}
                 </div>
 

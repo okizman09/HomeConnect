@@ -137,4 +137,12 @@ export const usersAPI = {
 
   getLandlordListings: (landlordId) =>
     apiCall(`/users/${landlordId}/listings`),
+
+  toggleSavedListing: (listingId) =>
+    apiCall('/users/saved', {
+      method: 'POST',
+      body: JSON.stringify({ listingId }),
+    }),
+
+  getSavedListings: () => apiCall('/users/saved'),
 };

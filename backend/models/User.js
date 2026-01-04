@@ -37,6 +37,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a location']
   },
+  savedListings: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Listing'
+  }],
   resetPasswordToken: String,
   resetPasswordExpire: Date,
   createdAt: {
