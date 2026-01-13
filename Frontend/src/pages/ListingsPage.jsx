@@ -61,6 +61,25 @@ const ListingsPage = ({ onSelectListing }) => {
     setSearchTerm('');
   };
 
+  const handleToggleSave = async (e, listingId) => {
+    e.stopPropagation();
+    if (!user) return;
+
+    const isSaved = savedListingIds.includes(listingId);
+    try {
+      const response = await usersAPI.toggleSavedListing(listingId);
+      if (response.success) {
+        setSavedListingIds(prev =>
+          isSaved
+            ? prev.filter(id => id !== listingId)
+            : [...prev, listingId]
+        );
+      }
+    } catch (err) {
+      console.error("Failed to toggle save", err);
+    }
+  };
+
   const filteredListings = listings.filter((listing) => {
     const matchesSearch =
       listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -210,22 +229,7 @@ const ListingsPage = ({ onSelectListing }) => {
                   )}
                   {user && (
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Handle toggle save
-                        const isSaved = savedListingIds.includes(listing._id);
-                        usersAPI.toggleSavedListing(listing._id)
-                          .then(response => {
-                            if (response.success) {
-                              setSavedListingIds(prev =>
-                                isSaved
-                                  ? prev.filter(id => id !== listing._id)
-                                  : [...prev, listing._id]
-                              );
-                            }
-                          })
-                          .catch(console.error);
-                      }}
+                      onClick={(e) => handleToggleSave(e, listing._id)}
                       className={`absolute top-2 left-2 z-20 p-2 rounded-full shadow-md transition ${savedListingIds.includes(listing._id) ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-gray-400 hover:text-red-500 hover:bg-gray-50'}`}
                       title={savedListingIds.includes(listing._id) ? "Unsave Property" : "Save Property"}
                     >

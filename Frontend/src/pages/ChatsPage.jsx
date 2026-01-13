@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, Send, X, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, X, ArrowLeft, Check, CheckCheck } from 'lucide-react';
 import { messagesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatTime } from '../utils';
@@ -30,12 +30,21 @@ const ChatsPage = () => {
 
     // Listen for incoming messages
     socketRef.current.on('receiveMessage', (incomingMessage) => {
+      // If we are currently chatting with the sender, add the message
       if (
         selectedChat &&
         (incomingMessage.senderId === selectedChat.userId ||
           incomingMessage.receiverId === selectedChat.userId)
       ) {
         setMessages((prev) => [...prev, incomingMessage]);
+
+        // If the window is open, mark as read immediately
+        if (incomingMessage.senderId === selectedChat.userId) {
+          messagesAPI.markAsRead(incomingMessage.senderId).catch(console.error);
+        }
+      } else {
+        // Update unread count in conversations list logic here if needed
+        // (For now, we rely on page refresh or local state update logic, simpler to just fetch conversations again or update local count)
       }
     });
 
@@ -43,6 +52,15 @@ const ChatsPage = () => {
     socketRef.current.on('messageSent', ({ chat }) => {
       if (selectedChat && chat.receiverId === selectedChat.userId) {
         setMessages((prev) => [...prev, chat]);
+      }
+    });
+
+    // Listen for read receipts
+    socketRef.current.on('messagesRead', ({ receiverId }) => {
+      if (selectedChat && selectedChat.userId === receiverId) {
+        setMessages(prev => prev.map(msg =>
+          (msg.senderId._id === user.id || msg.senderId === user.id) ? { ...msg, read: true } : msg
+        ));
       }
     });
 
@@ -59,7 +77,6 @@ const ChatsPage = () => {
         const data = await messagesAPI.getConversations();
         setConversations(data?.conversations || data || []);
       } catch (err) {
-        setError('Failed to load conversations');
         console.error('Error fetching conversations:', err);
       } finally {
         setLoading(false);
@@ -67,7 +84,7 @@ const ChatsPage = () => {
     };
 
     fetchConversations();
-  }, []);
+  }, []); // Run only on mount or if we want to poll/refresh
 
   // Fetch messages when chat is selected
   useEffect(() => {
@@ -78,6 +95,15 @@ const ChatsPage = () => {
         setError('');
         const data = await messagesAPI.getMessages(selectedChat.userId);
         setMessages(data?.messages || []);
+
+        // Mark as read immediately
+        await messagesAPI.markAsRead(selectedChat.userId);
+
+        // Update local conversation unread count
+        setConversations(prev => prev.map(c =>
+          c.userId === selectedChat.userId ? { ...c, unread: 0 } : c
+        ));
+
       } catch (err) {
         setError('Failed to load messages');
         console.error('Error fetching messages:', err);
@@ -126,9 +152,8 @@ const ChatsPage = () => {
         <div className="bg-white rounded-lg shadow-md overflow-hidden h-full flex flex-col md:flex-row">
           {/* Conversation List */}
           <div
-            className={`w-full md:w-1/3 border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ${
-              selectedChat ? 'hidden md:flex' : 'flex'
-            }`}
+            className={`w-full md:w-1/3 border-r border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ${selectedChat ? 'hidden md:flex' : 'flex'
+              }`}
           >
             {/* Header */}
             <div className="p-4 border-b bg-white flex-shrink-0">
@@ -144,9 +169,8 @@ const ChatsPage = () => {
                   <div
                     key={conv._id || conv.userId}
                     onClick={() => setSelectedChat(conv)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-100 transition ${
-                      selectedChat?.userId === conv.userId ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''
-                    }`}
+                    className={`p-4 border-b cursor-pointer hover:bg-gray-100 transition ${selectedChat?.userId === conv.userId ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       {/* Avatar */}
@@ -188,9 +212,8 @@ const ChatsPage = () => {
 
           {/* Chat Window */}
           <div
-            className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
-              selectedChat ? 'flex' : 'hidden md:flex'
-            }`}
+            className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${selectedChat ? 'flex' : 'hidden md:flex'
+              }`}
           >
             {selectedChat ? (
               <>
@@ -229,7 +252,7 @@ const ChatsPage = () => {
                         // Handle both populated objects and plain IDs
                         const senderId = typeof msg.senderId === 'object' ? msg.senderId._id : msg.senderId;
                         const isCurrentUser = senderId === user.id || senderId === user._id || String(senderId) === String(user.id);
-                        
+
                         return (
                           <div
                             key={msg._id}
@@ -237,17 +260,25 @@ const ChatsPage = () => {
                           >
                             <div className="max-w-xs md:max-w-md">
                               <div
-                                className={`px-4 py-2 rounded-lg text-sm md:text-base ${
-                                  isCurrentUser
+                                className={`px-4 py-2 rounded-lg text-sm md:text-base ${isCurrentUser
                                     ? 'bg-indigo-600 text-white rounded-br-none'
                                     : 'bg-white text-gray-900 border border-gray-200 rounded-bl-none'
-                                }`}
+                                  }`}
                               >
                                 {msg.message}
                               </div>
-                              <p className="text-xs text-gray-500 mt-1 px-2">
-                                {formatTime(msg.timestamp)}
-                              </p>
+                              <div className="flex items-center justify-end space-x-1 mt-1 px-1">
+                                <span className="text-[10px] text-gray-500">
+                                  {formatTime(msg.timestamp)}
+                                </span>
+                                {isCurrentUser && (
+                                  msg.read ? (
+                                    <CheckCheck className="w-3 h-3 text-red-500" />
+                                  ) : (
+                                    <Check className="w-3 h-3 text-gray-400" />
+                                  )
+                                )}
+                              </div>
                             </div>
                           </div>
                         );

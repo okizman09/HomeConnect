@@ -144,3 +144,26 @@ exports.getConversations = async (req, res) => {
     });
   }
 };
+
+// @desc    Mark messages as read
+// @route   PUT /api/chat/read/:senderId
+// @access  Private
+exports.markMessagesRead = async (req, res) => {
+  try {
+    const { senderId } = req.params;
+
+    await Chat.updateMany(
+      { senderId, receiverId: req.user._id, read: false },
+      { $set: { read: true } }
+    );
+
+    // Emit real-time update to the sender (so their UI updates to "Read")
+    const io = req.app.get('io');
+    io.to(senderId).emit('messagesRead', { receiverId: req.user._id });
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Error marking messages as read' });
+  }
+};

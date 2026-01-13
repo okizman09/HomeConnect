@@ -54,7 +54,8 @@ const CreateListingPage = ({ onNavigate }) => {
         );
 
         if (!uploadResponse.ok) {
-          throw new Error('Image upload failed');
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.message || 'Image upload failed');
         }
 
         const uploadedData = await uploadResponse.json();

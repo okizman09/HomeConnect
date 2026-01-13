@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { usersAPI } from '../services/api';
-import { User, MapPin, Phone, Mail, FileText, ChevronRight, Save } from 'lucide-react';
+import { User, MapPin, Phone, Mail, FileText, ChevronRight, Save, Camera } from 'lucide-react';
 
 export default function ProfileSettings({ onNavigate }) {
     const { user, updateProfile: updateAuthUser } = useAuth();
@@ -10,8 +10,10 @@ export default function ProfileSettings({ onNavigate }) {
         name: '',
         phone: '',
         location: '',
+        profilePic: '',
     });
     const [loading, setLoading] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
 
@@ -21,12 +23,37 @@ export default function ProfileSettings({ onNavigate }) {
                 name: user.name || '',
                 phone: user.phone || '',
                 location: user.location || '',
+                profilePic: user.profilePic || '',
             });
         }
     }, [user]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        setError('');
+
+        const data = new FormData();
+        data.append('image', file);
+
+        try {
+            const response = await usersAPI.uploadProfilePicture(data);
+            if (response.success) {
+                setFormData(prev => ({ ...prev, profilePic: response.url }));
+                setSuccess('Image uploaded successfully. Click Save to apply changes.');
+            }
+        } catch (err) {
+            console.error(err);
+            setError('Failed to upload image');
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -126,9 +153,38 @@ export default function ProfileSettings({ onNavigate }) {
                                 </div>
                             </div>
 
-                            <div className="border-t border-gray-100 pt-6"></div>
+                            <div className="flex flex-col items-center justify-center pb-6 border-b border-gray-100">
+                                <div className="relative group cursor-pointer">
+                                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg bg-gray-200">
+                                        {(user?.profilePic || formData.profilePic) ? (
+                                            <img
+                                                src={formData.profilePic || user.profilePic}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-500">
+                                                <User className="w-12 h-12" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <label htmlFor="profile-upload" className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 rounded-full transition-opacity duration-200 cursor-pointer">
+                                        <Camera className="w-8 h-8" />
+                                    </label>
+                                    <input
+                                        type="file"
+                                        id="profile-upload"
+                                        className="hidden"
+                                        accept="image/*"
+                                        onChange={handleImageUpload}
+                                        disabled={uploadingImage}
+                                    />
+                                </div>
+                                <p className="mt-3 text-sm text-gray-500">Click to change profile picture</p>
+                                {uploadingImage && <p className="text-xs text-indigo-600 mt-1">Uploading...</p>}
+                            </div>
 
-                            {/* Name */}
+                            {/* Email (Immutable) */}
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                                     Full Name

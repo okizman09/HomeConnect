@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
@@ -10,16 +10,24 @@ import ChatsPage from './pages/ChatsPage';
 import CreateListingPage from './pages/CreateListingPage';
 import LandlordDashboard from './pages/LandlordDashboard';
 import TenantDashboard from './pages/TenantDashboard';
+import MaintenancePage from './pages/MaintenancePage';
 import ProfileSettings from './pages/ProfileSettings';
 
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import { Home } from 'lucide-react';
+import AIChatAssistant from './components/AIChatAssistant';
+import logo from './assets/logo.png';
+
 
 const AppContent = () => {
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [currentPage, setCurrentPage] = useState(localStorage.getItem('currentPage') || 'landing');
   const [selectedListing, setSelectedListing] = useState(null);
   const { user, loading } = useAuth();
+
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage);
+  }, [currentPage]);
 
   // Check URL on mount for reset password link
   React.useEffect(() => {
@@ -33,7 +41,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100">
         <div className="text-center">
-          <Home className="w-16 h-16 text-indigo-600 animate-pulse mx-auto mb-4" />
+          <img src={logo} alt="Loading..." className="h-24 w-auto animate-pulse mx-auto mb-4 object-contain" />
           <p className="text-gray-600 text-lg">Loading...</p>
         </div>
       </div>
@@ -85,6 +93,8 @@ const AppContent = () => {
         return <ListingsPage onSelectListing={setSelectedListing} />;
       case 'listings':
         return <ListingsPage onSelectListing={setSelectedListing} />;
+      case 'maintenance':
+        return <MaintenancePage onNavigate={setCurrentPage} />;
       case 'profile-settings': // Added route for ProfileSettings
         return <ProfileSettings onNavigate={setCurrentPage} />;
       default:
@@ -100,6 +110,7 @@ const AppContent = () => {
     <div className="min-h-screen bg-gray-50">
       {user && <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />}
       {renderPage()}
+      {user && <AIChatAssistant />}
     </div>
   );
 };

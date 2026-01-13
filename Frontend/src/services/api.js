@@ -123,6 +123,9 @@ export const messagesAPI = {
       method: 'POST',
       body: JSON.stringify({ receiverId: userId, message: 'Hi' }),
     }),
+
+  markAsRead: (senderId) =>
+    apiCall(`/messages/read/${senderId}`, { method: 'PUT' }),
 };
 
 // Users endpoints
@@ -135,6 +138,18 @@ export const usersAPI = {
       body: JSON.stringify(userData),
     }),
 
+  uploadProfilePicture: (formData) =>
+    fetch(`${API_BASE_URL}/upload/profile`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    }).then((res) => {
+      if (!res.ok) throw new Error('Upload failed');
+      return res.json();
+    }),
+
   getLandlordListings: (landlordId) =>
     apiCall(`/users/${landlordId}/listings`),
 
@@ -145,4 +160,36 @@ export const usersAPI = {
     }),
 
   getSavedListings: () => apiCall('/users/saved'),
+};
+
+// AI endpoints
+export const aiAPI = {
+  chat: (message) =>
+    apiCall('/ai/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message }),
+    }),
+
+  analyzeLease: (formData) =>
+    fetch(`${API_BASE_URL}/ai/analyze-lease`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    }).then((res) => {
+      if (!res.ok) throw new Error('Analysis failed');
+      return res.json();
+    }),
+};
+
+// Maintenance endpoints
+export const maintenanceAPI = {
+  create: (data) =>
+    apiCall('/maintenance', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  getAll: () => apiCall('/maintenance'),
 };

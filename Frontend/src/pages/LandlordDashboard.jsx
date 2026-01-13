@@ -61,10 +61,10 @@ const LandlordDashboard = ({ onNavigate }) => {
     try {
       setLoading(true);
       setError('');
-      
+
       // First update the listing data
       await listingsAPI.update(editingListing._id, editFormData);
-      
+
       // Then upload new images if any
       if (newImages.length > 0) {
         const formData = new FormData();
@@ -73,14 +73,14 @@ const LandlordDashboard = ({ onNavigate }) => {
         });
         await listingsAPI.uploadImages(editingListing._id, formData);
       }
-      
+
       // Update local state with new images
       const updatedListing = {
         ...editingListing,
         ...editFormData,
         images: [...editingImages, ...newImages.map(img => img.preview)]
       };
-      
+
       setListings(
         listings.map((listing) =>
           listing._id === editingListing._id
@@ -88,7 +88,7 @@ const LandlordDashboard = ({ onNavigate }) => {
             : listing
         )
       );
-      
+
       setShowEditModal(false);
       setEditingListing(null);
       setEditingImages([]);
@@ -105,9 +105,9 @@ const LandlordDashboard = ({ onNavigate }) => {
     try {
       setLoading(true);
       setError('');
-      
+
       await listingsAPI.delete(listingId);
-      
+
       // Update local state
       setListings(listings.filter((listing) => listing._id !== listingId));
       setDeleteConfirm(null);
@@ -159,9 +159,20 @@ const LandlordDashboard = ({ onNavigate }) => {
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-2">Welcome back, {user?.name || 'Landlord'}!</p>
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-100 shadow-sm bg-gray-200">
+              {user?.profilePic ? (
+                <img src={user.profilePic} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-2xl font-bold">
+                  {(user?.name || 'L')[0].toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Dashboard</h1>
+              <p className="text-gray-600 mt-1">Welcome back, {user?.name || 'Landlord'}!</p>
+            </div>
           </div>
           <button
             onClick={() => onNavigate('create')}
@@ -223,7 +234,7 @@ const LandlordDashboard = ({ onNavigate }) => {
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg md:text-xl font-bold mb-2">{listing.title}</h3>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-1">{listing.description}</p>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                       <div className="flex items-center text-gray-600">
                         <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />

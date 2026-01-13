@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Home, Search, MessageSquare, Plus, LogOut, User, LayoutDashboard, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/logo.png';
 
 const Navbar = ({ currentPage, onNavigate }) => {
   const { user, logout } = useAuth();
@@ -18,38 +19,39 @@ const Navbar = ({ currentPage, onNavigate }) => {
     setMobileMenuOpen(false);
   };
 
-  const isActive = (page) => currentPage === page ? 'text-white bg-indigo-700' : 'text-indigo-100 hover:text-white hover:bg-indigo-700';
+  const isActive = (page) => currentPage === page
+    ? 'bg-primary text-white shadow-md'
+    : 'text-gray-600 hover:bg-primary/10 hover:text-primary';
 
   const isDashboardActive = currentPage === 'dashboard' || (user.role === 'landlord' && currentPage === 'listings' && !mobileMenuOpen);
 
   return (
-    <nav className="bg-indigo-600 text-white shadow-lg sticky top-0 z-40">
+    <nav className="glass sticky top-0 z-40 text-gray-800 border-b border-white/20">
       <div className="container mx-auto px-4">
         {/* Main Navigation */}
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3">
           {/* Logo */}
           <button
             onClick={() => handleNavigate(user.role === 'landlord' ? 'dashboard' : 'listings')}
             className="flex items-center space-x-2 hover:opacity-80 transition flex-shrink-0"
           >
-            <Home className="w-8 h-8" />
-            <span className="text-2xl font-bold hidden sm:inline">HomeConnect</span>
+            <img src={logo} alt="HomeConnect Logo" className="h-40 w-auto object-contain" />
           </button>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-2">
             {user.role === 'landlord' ? (
               <>
                 <button
                   onClick={() => handleNavigate('dashboard')}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${isActive('dashboard')}`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('dashboard')}`}
                 >
                   <LayoutDashboard className="w-5 h-5" />
                   <span>Dashboard</span>
                 </button>
                 <button
                   onClick={() => handleNavigate('create')}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${isActive('create')}`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('create')}`}
                 >
                   <Plus className="w-5 h-5" />
                   <span>Create Listing</span>
@@ -59,14 +61,14 @@ const Navbar = ({ currentPage, onNavigate }) => {
               <>
                 <button
                   onClick={() => handleNavigate('dashboard')}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${isActive('dashboard')}`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('dashboard')}`}
                 >
                   <LayoutDashboard className="w-5 h-5" />
                   <span>Dashboard</span>
                 </button>
                 <button
                   onClick={() => handleNavigate('listings')}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${isActive('listings')}`}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('listings')}`}
                 >
                   <Search className="w-5 h-5" />
                   <span>Explore</span>
@@ -76,7 +78,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
 
             <button
               onClick={() => handleNavigate('chats')}
-              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition ${isActive('chats')}`}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('chats')}`}
             >
               <MessageSquare className="w-5 h-5" />
               <span>Messages</span>
@@ -86,8 +88,12 @@ const Navbar = ({ currentPage, onNavigate }) => {
           {/* User Menu and Mobile Toggle */}
           <div className="flex items-center space-x-4">
             <div className="hidden sm:flex items-center space-x-2">
-              <User className="w-5 h-5" />
-              <span className="text-sm font-medium">{user.name || user.email}</span>
+              {user.profilePic ? (
+                <img src={user.profilePic} alt="Profile" className="w-8 h-8 rounded-full object-cover border border-indigo-200" />
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+              <span className="text-sm font-medium pr-1">{user.name || user.email}</span>
               <span className="text-xs bg-indigo-500 px-2 py-1 rounded-full">
                 {user.role}
               </span>

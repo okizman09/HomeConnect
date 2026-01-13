@@ -11,6 +11,9 @@ exports.updateProfile = async (req, res) => {
             user.name = req.body.name || user.name;
             user.phone = req.body.phone || user.phone;
             user.location = req.body.location || user.location;
+            if (req.body.profilePic) {
+                user.profilePic = req.body.profilePic;
+            }
 
             // Email and Role are intentionally not updatable here for security/logic reasons
 
@@ -29,6 +32,7 @@ exports.updateProfile = async (req, res) => {
                     role: updatedUser.role,
                     phone: updatedUser.phone,
                     location: updatedUser.location,
+                    profilePic: updatedUser.profilePic,
                     savedListings: updatedUser.savedListings
                 }
             });

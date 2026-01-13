@@ -20,6 +20,8 @@ const listingRoutes = require('./routes/listings');
 const chatRoutes = require('./routes/chat');
 const uploadRoutes = require('./routes/upload');
 const userRoutes = require('./routes/users');
+const maintenanceRoutes = require('./routes/maintenance');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +38,9 @@ const io = socketIO(server, {
     methods: ['GET', 'POST']
   }
 });
+
+// Make io accessible to our router
+app.set('io', io);
 
 // Middleware
 app.use(cors({
@@ -60,6 +65,8 @@ app.use('/api/listings', listingRoutes);
 app.use('/api/messages', chatRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/maintenance', maintenanceRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

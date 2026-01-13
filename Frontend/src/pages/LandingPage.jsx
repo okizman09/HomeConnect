@@ -1,20 +1,15 @@
 import React from "react";
 import { Home, Search, MessageSquare } from "lucide-react";
+import logo from "../assets/logo.png";
 
 const LandingPage = ({ onNavigate }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100">
       <div className="container mx-auto px-4 py-20">
         <div className="text-center">
-          <div className="flex justify-center mb-6">
-            <Home className="w-20 h-20 text-indigo-600" />
+          <div className="flex justify-center mb-12">
+            <img src={logo} alt="HomeConnect Logo" className="h-[25rem] w-auto object-contain drop-shadow-xl animate-fade-in-up" />
           </div>
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">
-            Welcome to HomeConnect
-          </h1>
-          <p className="text-2xl text-gray-600 mb-12">
-            Connect landlords and tenants seamlessly
-          </p>
 
           <div className="flex justify-center space-x-6 mb-16">
             <button

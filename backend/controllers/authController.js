@@ -55,7 +55,8 @@ exports.register = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        profilePic: user.profilePic
       }
     });
   } catch (error) {
@@ -114,7 +115,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        profilePic: user.profilePic
       }
     });
   } catch (error) {
@@ -141,7 +143,8 @@ exports.getMe = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        profilePic: user.profilePic
       }
     });
   } catch (error) {
@@ -259,7 +262,8 @@ exports.resetPassword = async (req, res, next) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        location: user.location
+        location: user.location,
+        profilePic: user.profilePic
       }
     });
   } catch (error) {

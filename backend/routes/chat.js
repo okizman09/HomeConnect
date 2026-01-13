@@ -13,5 +13,6 @@ router.use(protect);
 router.get('/conversations', getConversations);
 router.get('/:userId', getChatHistory);
 router.post('/', sendMessage);
+router.put('/read/:senderId', require('../controllers/ChatController').markMessagesRead);
 
 module.exports = router;

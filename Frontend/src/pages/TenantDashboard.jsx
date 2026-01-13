@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { usersAPI } from '../services/api';
 import { formatPrice } from '../utils';
 import { PROPERTY_LABELS } from '../constants';
+import AIChatAssistant from '../components/AIChatAssistant';
 
 const TenantDashboard = ({ onNavigate }) => {
   const { user, logout, role } = useAuth();
@@ -61,6 +62,7 @@ const TenantDashboard = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-4 md:py-8">
+
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4 mb-8">
@@ -83,8 +85,18 @@ const TenantDashboard = ({ onNavigate }) => {
           <div className="grid md:grid-cols-2 gap-6">
             {/* Avatar */}
             <div className="flex flex-col items-center justify-center">
-              <div className="w-24 h-24 bg-indigo-600 text-white rounded-full flex items-center justify-center text-4xl font-bold mb-4">
-                {(user?.name || 'T')[0].toUpperCase()}
+              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-100 shadow-md mb-4 bg-gray-200">
+                {user?.profilePic ? (
+                  <img
+                    src={user.profilePic}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-indigo-600 text-white text-4xl font-bold">
+                    {(user?.name || 'T')[0].toUpperCase()}
+                  </div>
+                )}
               </div>
               <h3 className="text-xl font-bold text-center">{user?.name || 'Tenant'}</h3>
               <p className="text-gray-600 text-center mt-1">Tenant Account</p>
@@ -109,7 +121,7 @@ const TenantDashboard = ({ onNavigate }) => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Explore Listings */}
           <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition"
             onClick={() => onNavigate('listings')}
@@ -141,6 +153,22 @@ const TenantDashboard = ({ onNavigate }) => {
               View Messages →
             </button>
           </div>
+
+          {/* Maintenance */}
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition"
+            onClick={() => onNavigate('maintenance')}
+          >
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="w-12 h-12 bg-purple-600 text-white rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold">Maintenance</h3>
+            </div>
+            <p className="text-gray-600 mb-4">Report issues and get instant AI troubleshooting</p>
+            <button className="text-purple-600 font-semibold hover:text-purple-700">
+              Request Help →
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -155,7 +183,9 @@ const TenantDashboard = ({ onNavigate }) => {
           </div>
           <div className="bg-white p-4 md:p-6 rounded-lg shadow">
             <div className="text-sm text-gray-600 mb-1">Member Since</div>
-            <div className="text-lg md:text-xl font-bold text-blue-600">Today</div>
+            <div className="text-lg md:text-xl font-bold text-blue-600">
+              {user?.dateCreated ? new Date(user.dateCreated).toLocaleDateString() : 'N/A'}
+            </div>
           </div>
         </div>
 

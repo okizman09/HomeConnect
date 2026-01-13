@@ -13,4 +13,11 @@ router.post(
   uploadImages
 );
 
+router.post(
+  '/profile',
+  protect,
+  upload.single('image'),
+  require('../controllers/uploadController').uploadProfileImage
+);
+
 module.exports = router;
