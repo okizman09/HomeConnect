@@ -25,12 +25,15 @@ class AIServiceError extends Error {
 
 // Call generateContent with per-model retries and fallback across models.
 // Retries transient failures (429/5xx, network errors); anything else throws.
+// Each attempt is capped so a hung upstream call can never stall a request forever.
+const ATTEMPT_TIMEOUT_MS = 25000;
 const generateWithFallback = async (parts, { triesPerModel = 2 } = {}) => {
     let lastError;
     for (const name of GEMINI_MODELS) {
         for (let attempt = 1; attempt <= triesPerModel; attempt++) {
             try {
-                const result = await genAI.getGenerativeModel({ model: name }).generateContent(parts);
+                const result = await genAI.getGenerativeModel({ model: name })
+                    .generateContent(parts, { timeout: ATTEMPT_TIMEOUT_MS });
                 const response = await result.response;
                 return response.text();
             } catch (error) {
