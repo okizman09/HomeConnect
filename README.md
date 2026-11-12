@@ -6,8 +6,8 @@ A modern digital platform that efficiently connects Landlords posting vacant pro
 
 **Project Name:** Landlord-Tenant Connection Platform (MVP V3)
 **Status:** Minimum Viable Product (MVP) - Ready for Deployment
-**Document Version:** 3.1
-**Last Updated:** January 13, 2026
+**Document Version:** 3.2
+**Last Updated:** November 12, 2026
 
 ### 🎯 Product Goals
 To launch a functional digital platform that increases market transparency, improves access to adequate/affordable housing, and ensures trust through AI verification.
@@ -17,18 +17,11 @@ To launch a functional digital platform that increases market transparency, impr
 
 ---
 
-## 👥 Team & Roles
+## 👤 Project Lead
 
 | Name | Role | Responsibilities |
 |------|------|------------------|
-| **Daud Abdulrahman Okikiola** | **Project Lead & AI Software Developer** | • **Core Development:** Full-stack architecture, API design, and Database management.<br>• **AI Integration:** Implementation of Google Gemini features (**Chatbot**, **Image Verification**).<br>• **Deployment:** Server management and CI/CD pipelines.<br>• **Technical Strategy:** Choosing the tech stack and roadmap execution. |
-| **Issa Rukayat Morayo** | **Project Supervisor & AI Software Developer** | • **AI Development:** Design and implementation of the **Maintenance Classifier** and **Lease Document Analyzer** modules.<br>• **Supervision:** Overseeing project timelines and deliverable quality.<br>• **Quality Assurance:** Testing features, identifying bugs, and ensuring UI consistency.<br>• **Documentation:** Maintaining PRDs, user guides, and compliance documents. |
-
-### 🤝 Collaborative Process
-The development process is shared equally but structured by role:
-- **Planning:** Morayo defines the requirements and "What" needs to be built. Abdulrahman defines the technical "How".
-- **Execution:** Abdulrahman writes the core logic. Morayo reviews the implementation against requirements.
-- **AI Strategy:** Morayo sets the ethical boundaries (e.g., "The AI must reject blurred images"). Abdulrahman implements the specific prompt engineering and API calls.
+| **Daud Abdulrahman Okikiola** | **Project Lead & AI Software Developer** | • **Core Development:** Full-stack architecture, API design, and Database management.<br>• **AI Integration:** Implementation of Google Gemini features (**Chatbot**, **Image Verification**, **Maintenance Classifier**, **Lease Document Analyzer**).<br>• **Deployment:** Server management and CI/CD pipelines.<br>• **Technical Strategy:** Choosing the tech stack and roadmap execution.<br>• **Quality Assurance:** Testing features, identifying bugs, and ensuring UI consistency.<br>• **Documentation:** Maintaining PRDs, user guides, and compliance documents. |
 
 ---
 
@@ -46,17 +39,16 @@ The development process is shared equally but structured by role:
 
 ### 3. Communication
 - **Real-Time Chat:** Instant messaging between landlords and tenants using Socket.io.
-- **Email Notifications:** Alerts for new messages (via Nodemailer).
+- **Email Notifications:** Alerts for new messages (via Resend).
 
 ### 4. 🧠 AI-Powered Features (Powered by Google Gemini)
-**Shared Development by Abdulrahman & Morayo**
 
-| Feature | Developer | Description |
-|---------|-----------|-------------|
-| **AI Property Verification** | **Abdulrahman** | **(New)** When a landlord uploads images, the AI analyzes them to reject selfies/blur and verify it's a house. |
-| **Smart Chat Assistant** | **Abdulrahman** | A 24/7 AI chatbot that answers tenant questions based on the Tenant Handbook using Markdown formatting. |
-| **Maintenance AI** | **Morayo** | Auto-classifies maintenance requests by urgency (High/Medium/Low) and category to help landlords prioritize. |
-| **Lease Analyzer** | **Morayo** | extracts key terms and potential risks from uploaded lease PDF documents. |
+| Feature | Description |
+|---------|-------------|
+| **AI Property Verification** | When a landlord uploads images, the AI analyzes them to reject selfies/blur and verify it's a house. |
+| **Smart Chat Assistant** | A 24/7 AI chatbot that answers tenant questions based on the Tenant Handbook using Markdown formatting. |
+| **Maintenance AI** | Auto-classifies maintenance requests by urgency (High/Medium/Low) and category to help landlords prioritize. |
+| **Lease Analyzer** | Extracts key terms and potential risks from uploaded lease PDF documents. |
 
 ---
 
@@ -116,4 +108,3 @@ npm run dev
 
 ## 💬 Contact
 - **Project Lead:** Daud Abdulrahman Okikiola
-- **Supervisor:** Issa Rukayat Morayo
