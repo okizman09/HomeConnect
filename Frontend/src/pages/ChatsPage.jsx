@@ -1,9 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Send, X, ArrowLeft, Check, CheckCheck } from 'lucide-react';
 import { messagesAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatTime } from '../utils';
 import io from 'socket.io-client';
+
+// The backend populates sender/receiver refs ({ _id, name }) on some paths and
+// leaves plain ids on others, so normalize before every comparison.
+const idOf = (ref) => {
+  if (ref === null || ref === undefined) return '';
+  const raw = typeof ref === 'object' ? ref._id : ref;
+  return String(raw || '');
+};
+
+const sameId = (a, b) => idOf(a) !== '' && idOf(a) === idOf(b);
 
 const ChatsPage = () => {
   const { user } = useAuth();
@@ -13,10 +23,35 @@ const ChatsPage = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
+  // Mirror of selectedChat for socket handlers, so the connection (created once
+  // per user below) never captures a stale chat or reconnects on every switch.
+  const selectedChatRef = useRef(null);
 
-  // Initialize Socket.io connection
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
+  const fetchConversations = useCallback(async () => {
+    try {
+      const data = await messagesAPI.getConversations();
+      setConversations(data?.conversations || data || []);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+    }
+  }, []);
+
+  // Append a live message unless it is already in state (REST + socket overlap).
+  const appendMessage = useCallback((incoming) => {
+    setMessages((prev) =>
+      prev.some((m) => String(m._id) === String(incoming._id)) ? prev : [...prev, incoming]
+    );
+  }, []);
+
+  // Initialize Socket.io connection once per user. Never reconnect when the
+  // selected chat changes: handlers read the live chat from selectedChatRef.
   useEffect(() => {
     const socketURL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     socketRef.current = io(socketURL, {
@@ -28,38 +63,47 @@ const ChatsPage = () => {
     // Join user's room
     socketRef.current.emit('join', user?.id);
 
+    // Track who is online for presence indicators
+    socketRef.current.on('onlineUsers', (userIds) => {
+      setOnlineUsers(userIds || []);
+    });
+
     // Listen for incoming messages
     socketRef.current.on('receiveMessage', (incomingMessage) => {
+      const current = selectedChatRef.current;
       // If we are currently chatting with the sender, add the message
       if (
-        selectedChat &&
-        (incomingMessage.senderId === selectedChat.userId ||
-          incomingMessage.receiverId === selectedChat.userId)
+        current &&
+        (sameId(incomingMessage.senderId, current.userId) ||
+          sameId(incomingMessage.receiverId, current.userId))
       ) {
-        setMessages((prev) => [...prev, incomingMessage]);
+        appendMessage(incomingMessage);
 
         // If the window is open, mark as read immediately
-        if (incomingMessage.senderId === selectedChat.userId) {
-          messagesAPI.markAsRead(incomingMessage.senderId).catch(console.error);
+        if (sameId(incomingMessage.senderId, current.userId)) {
+          messagesAPI.markAsRead(idOf(current.userId)).catch(console.error);
         }
       } else {
-        // Update unread count in conversations list logic here if needed
-        // (For now, we rely on page refresh or local state update logic, simpler to just fetch conversations again or update local count)
+        // Another conversation (or none) is open: refresh the list so the
+        // last message and unread badge stay correct without a page reload.
+        fetchConversations();
       }
     });
 
     // Listen for message confirmation (sent by current user)
     socketRef.current.on('messageSent', ({ chat }) => {
-      if (selectedChat && chat.receiverId === selectedChat.userId) {
-        setMessages((prev) => [...prev, chat]);
+      const current = selectedChatRef.current;
+      if (current && sameId(chat.receiverId, current.userId)) {
+        appendMessage(chat);
       }
     });
 
     // Listen for read receipts
     socketRef.current.on('messagesRead', ({ receiverId }) => {
-      if (selectedChat && selectedChat.userId === receiverId) {
+      const current = selectedChatRef.current;
+      if (current && sameId(current.userId, receiverId)) {
         setMessages(prev => prev.map(msg =>
-          (msg.senderId._id === user.id || msg.senderId === user.id) ? { ...msg, read: true } : msg
+          sameId(msg.senderId, user?.id) ? { ...msg, read: true } : msg
         ));
       }
     });
@@ -67,51 +111,66 @@ const ChatsPage = () => {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, [user?.id, selectedChat]);
+  }, [user?.id, appendMessage, fetchConversations]);
 
   // Fetch conversations on mount
   useEffect(() => {
-    const fetchConversations = async () => {
-      try {
-        setLoading(true);
-        const data = await messagesAPI.getConversations();
-        setConversations(data?.conversations || data || []);
-      } catch (err) {
-        console.error('Error fetching conversations:', err);
-      } finally {
-        setLoading(false);
-      }
+    const load = async () => {
+      setLoading(true);
+      await fetchConversations();
+      setLoading(false);
     };
 
-    fetchConversations();
-  }, []); // Run only on mount or if we want to poll/refresh
+    load();
+  }, [fetchConversations]);
 
-  // Fetch messages when chat is selected
+  // Fetch messages when chat is selected. Live messages may arrive while the
+  // request is in flight, so merge them in instead of replacing state, and
+  // ignore the response if the user has already switched to another chat.
   useEffect(() => {
     if (!selectedChat) return;
+    const chatUserId = idOf(selectedChat.userId);
+    const myId = idOf(user?.id);
+    let cancelled = false;
 
     const fetchMessages = async () => {
       try {
         setError('');
-        const data = await messagesAPI.getMessages(selectedChat.userId);
-        setMessages(data?.messages || []);
+        const data = await messagesAPI.getMessages(chatUserId);
+        if (cancelled || !sameId(selectedChatRef.current?.userId, chatUserId)) return;
+        const fetched = data?.messages || [];
+
+        setMessages((prev) => {
+          const ids = new Set(fetched.map((m) => String(m._id)));
+          const extras = prev.filter((m) =>
+            !ids.has(String(m._id)) &&
+            ((sameId(m.senderId, myId) && sameId(m.receiverId, chatUserId)) ||
+              (sameId(m.senderId, chatUserId) && sameId(m.receiverId, myId)))
+          );
+          return [...fetched, ...extras];
+        });
 
         // Mark as read immediately
-        await messagesAPI.markAsRead(selectedChat.userId);
+        await messagesAPI.markAsRead(chatUserId);
 
         // Update local conversation unread count
-        setConversations(prev => prev.map(c =>
-          c.userId === selectedChat.userId ? { ...c, unread: 0 } : c
-        ));
+        if (!cancelled) {
+          setConversations(prev => prev.map(c =>
+            sameId(c.userId, chatUserId) ? { ...c, unread: 0 } : c
+          ));
+        }
 
       } catch (err) {
-        setError('Failed to load messages');
-        console.error('Error fetching messages:', err);
+        if (!cancelled) {
+          setError('Failed to load messages');
+          console.error('Error fetching messages:', err);
+        }
       }
     };
 
     fetchMessages();
-  }, [selectedChat]);
+    return () => { cancelled = true; };
+  }, [selectedChat, user?.id]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -169,7 +228,7 @@ const ChatsPage = () => {
                   <div
                     key={conv._id || conv.userId}
                     onClick={() => setSelectedChat(conv)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-100 transition ${selectedChat?.userId === conv.userId ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''
+                    className={`p-4 border-b cursor-pointer hover:bg-gray-100 transition ${sameId(selectedChat?.userId, conv.userId) ? 'bg-indigo-50 border-l-4 border-l-indigo-600' : ''
                       }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -233,7 +292,14 @@ const ChatsPage = () => {
                       <h3 className="font-semibold text-gray-900 truncate">
                         {selectedChat.userName || 'User'}
                       </h3>
-                      <p className="text-xs text-gray-500">Active now</p>
+                      <div className="flex items-center space-x-1.5">
+                        <span
+                          className={`w-2 h-2 rounded-full ${onlineUsers.some((id) => sameId(id, selectedChat.userId)) ? 'bg-green-500' : 'bg-gray-400'}`}
+                        />
+                        <p className="text-xs text-gray-500">
+                          {onlineUsers.some((id) => sameId(id, selectedChat.userId)) ? 'Active now' : 'Offline'}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

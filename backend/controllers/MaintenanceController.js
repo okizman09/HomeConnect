@@ -9,6 +9,13 @@ exports.createMaintenanceRequest = async (req, res) => {
     try {
         const { listingId, description, images } = req.body;
 
+        if (!listingId) {
+            return res.status(400).json({ success: false, message: 'listingId is required' });
+        }
+        if (!description || !String(description).trim()) {
+            return res.status(400).json({ success: false, message: 'description is required' });
+        }
+
         // Verify listing and get landlord ID
         const listing = await Listing.findById(listingId);
         if (!listing) {

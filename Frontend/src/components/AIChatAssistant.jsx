@@ -37,7 +37,7 @@ const AIChatAssistant = () => {
             }
         } catch (error) {
             console.error("Chat Error:", error);
-            setMessages(prev => [...prev, { role: 'assistant', text: "Network error. Please try again later." }]);
+            setMessages(prev => [...prev, { role: 'assistant', text: error.message || "Network error. Please try again later." }]);
         } finally {
             setLoading(false);
         }

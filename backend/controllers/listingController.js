@@ -25,6 +25,13 @@ exports.createListing = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    if (error.name === 'ValidationError') {
+      const details = Object.values(error.errors || {}).map(e => e.message).join(', ');
+      return res.status(400).json({
+        success: false,
+        message: details || 'Invalid listing data'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Error creating listing'
@@ -148,6 +155,13 @@ exports.updateListing = async (req, res) => {
       listing
     });
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      const details = Object.values(error.errors || {}).map(e => e.message).join(', ');
+      return res.status(400).json({
+        success: false,
+        message: details || 'Invalid listing data'
+      });
+    }
     res.status(500).json({
       success: false,
       message: 'Error updating listing'

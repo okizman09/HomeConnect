@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Edit2, Trash2, Plus, MapPin, DollarSign, Users, X, Save, Image as ImageIcon, Upload, Trash } from 'lucide-react';
+import { Edit2, Trash2, Plus, MapPin, DollarSign, Users, X, Save, Image as ImageIcon, Upload, Trash, Eye } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { listingsAPI } from '../services/api';
 import { formatPrice, formatDate } from '../utils';
 import { PROPERTY_LABELS, PROPERTY_TYPES } from '../constants';
 
-const LandlordDashboard = ({ onNavigate }) => {
+const LandlordDashboard = ({ onNavigate, onSelectListing }) => {
   const { user } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,23 +62,26 @@ const LandlordDashboard = ({ onNavigate }) => {
       setLoading(true);
       setError('');
 
-      // First update the listing data
-      await listingsAPI.update(editingListing._id, editFormData);
-
-      // Then upload new images if any
+      // Upload new images first, so a single update call saves everything
+      // (text fields, removed images, and newly uploaded image URLs) at once.
+      let uploadedUrls = [];
       if (newImages.length > 0) {
         const formData = new FormData();
         newImages.forEach(({ file }) => {
           formData.append('images', file);
         });
-        await listingsAPI.uploadImages(editingListing._id, formData);
+        const uploadRes = await listingsAPI.uploadImages(formData);
+        uploadedUrls = uploadRes.urls || [];
       }
+
+      const images = [...editingImages, ...uploadedUrls];
+      await listingsAPI.update(editingListing._id, { ...editFormData, images });
 
       // Update local state with new images
       const updatedListing = {
         ...editingListing,
         ...editFormData,
-        images: [...editingImages, ...newImages.map(img => img.preview)]
+        images
       };
 
       setListings(
@@ -94,7 +97,7 @@ const LandlordDashboard = ({ onNavigate }) => {
       setEditingImages([]);
       setNewImages([]);
     } catch (err) {
-      setError('Failed to update listing');
+      setError(err.message || 'Failed to update listing');
       console.error('Error updating listing:', err);
     } finally {
       setLoading(false);
@@ -262,6 +265,13 @@ const LandlordDashboard = ({ onNavigate }) => {
 
                   {/* Actions */}
                   <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => onSelectListing?.(listing)}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-lg transition flex items-center space-x-1 text-sm"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span className="hidden sm:inline">View</span>
+                    </button>
                     <button
                       onClick={() => handleEdit(listing)}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition flex items-center space-x-1 text-sm"

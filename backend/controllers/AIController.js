@@ -23,7 +23,7 @@ exports.analyzeLease = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Analysis failed: ' + error.message });
+        res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Analysis failed.' });
     }
 };
 
@@ -48,6 +48,6 @@ exports.chat = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: 'Server Error' });
+        res.status(error.statusCode || 500).json({ success: false, message: error.message || 'Server Error' });
     }
 };

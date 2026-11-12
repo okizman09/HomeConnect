@@ -37,6 +37,13 @@ exports.sendMessage = async (req, res) => {
   try {
     const { receiverId, message, listingId } = req.body;
 
+    if (!receiverId) {
+      return res.status(400).json({ success: false, message: 'receiverId is required' });
+    }
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({ success: false, message: 'Message cannot be empty' });
+    }
+
     const chat = await Chat.create({
       senderId: req.user._id,
       receiverId,

@@ -92,16 +92,17 @@ export const listingsAPI = {
       method: 'DELETE',
     }),
 
-  uploadImages: (id, formData) =>
-    fetch(`${API_BASE_URL}/listings/${id}/images`, {
+  uploadImages: (formData) =>
+    fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
       body: formData,
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
-    }).then((res) => {
-      if (!res.ok) throw new Error('Upload failed');
-      return res.json();
+    }).then(async (res) => {
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message || 'Upload failed');
+      return body;
     }),
 };
 

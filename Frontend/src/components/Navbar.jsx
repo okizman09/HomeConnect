@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Search, MessageSquare, Plus, LogOut, User, LayoutDashboard, Menu, X, Settings } from 'lucide-react';
+import { Search, MessageSquare, Plus, LogOut, User, LayoutDashboard, Menu, X, Settings, Wrench } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
 
@@ -23,8 +23,6 @@ const Navbar = ({ currentPage, onNavigate }) => {
     ? 'bg-primary text-white shadow-md'
     : 'text-gray-600 hover:bg-primary/10 hover:text-primary';
 
-  const isDashboardActive = currentPage === 'dashboard' || (user.role === 'landlord' && currentPage === 'listings' && !mobileMenuOpen);
-
   return (
     <nav className="glass sticky top-0 z-40 text-gray-800 border-b border-white/20">
       <div className="container mx-auto px-4">
@@ -35,7 +33,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
             onClick={() => handleNavigate(user.role === 'landlord' ? 'dashboard' : 'listings')}
             className="flex items-center space-x-2 hover:opacity-80 transition flex-shrink-0"
           >
-            <img src={logo} alt="HomeConnect Logo" className="h-40 w-auto object-contain" />
+            <img src={logo} alt="HomeConnect Logo" className="h-12 w-auto object-contain" />
           </button>
 
           {/* Desktop Navigation Links */}
@@ -56,6 +54,20 @@ const Navbar = ({ currentPage, onNavigate }) => {
                   <Plus className="w-5 h-5" />
                   <span>Create Listing</span>
                 </button>
+                <button
+                  onClick={() => handleNavigate('listings')}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('listings')}`}
+                >
+                  <Search className="w-5 h-5" />
+                  <span>Explore</span>
+                </button>
+                <button
+                  onClick={() => handleNavigate('maintenance')}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('maintenance')}`}
+                >
+                  <Wrench className="w-5 h-5" />
+                  <span>Maintenance</span>
+                </button>
               </>
             ) : (
               <>
@@ -72,6 +84,13 @@ const Navbar = ({ currentPage, onNavigate }) => {
                 >
                   <Search className="w-5 h-5" />
                   <span>Explore</span>
+                </button>
+                <button
+                  onClick={() => handleNavigate('maintenance')}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-full transition font-medium ${isActive('maintenance')}`}
+                >
+                  <Wrench className="w-5 h-5" />
+                  <span>Maintenance</span>
                 </button>
               </>
             )}
@@ -94,7 +113,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
                 <User className="w-5 h-5" />
               )}
               <span className="text-sm font-medium pr-1">{user.name || user.email}</span>
-              <span className="text-xs bg-indigo-500 px-2 py-1 rounded-full">
+              <span className="text-xs bg-indigo-500 text-white px-2 py-1 rounded-full">
                 {user.role}
               </span>
             </div>
@@ -102,14 +121,14 @@ const Navbar = ({ currentPage, onNavigate }) => {
             <div className="hidden sm:flex items-center border-l border-indigo-500 pl-4 space-x-2">
               <button
                 onClick={() => handleNavigate('profile-settings')}
-                className="flex items-center space-x-1 hover:text-indigo-200 transition"
+                className="flex items-center space-x-1 hover:text-indigo-600 transition"
                 title="Settings"
               >
                 <Settings className="w-5 h-5" />
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-1 hover:text-indigo-200 transition"
+                className="flex items-center space-x-1 hover:text-indigo-600 transition"
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />
@@ -119,7 +138,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden text-white hover:text-indigo-200 transition"
+              className="md:hidden text-gray-800 hover:text-indigo-600 transition"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -145,6 +164,20 @@ const Navbar = ({ currentPage, onNavigate }) => {
                   <Plus className="w-5 h-5" />
                   <span>Create Listing</span>
                 </button>
+                <button
+                  onClick={() => handleNavigate('listings')}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 ${isActive('listings')}`}
+                >
+                  <Search className="w-5 h-5" />
+                  <span>Explore</span>
+                </button>
+                <button
+                  onClick={() => handleNavigate('maintenance')}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 ${isActive('maintenance')}`}
+                >
+                  <Wrench className="w-5 h-5" />
+                  <span>Maintenance</span>
+                </button>
               </>
             ) : (
               <>
@@ -161,6 +194,13 @@ const Navbar = ({ currentPage, onNavigate }) => {
                 >
                   <Search className="w-5 h-5" />
                   <span>Explore</span>
+                </button>
+                <button
+                  onClick={() => handleNavigate('maintenance')}
+                  className={`w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 ${isActive('maintenance')}`}
+                >
+                  <Wrench className="w-5 h-5" />
+                  <span>Maintenance</span>
                 </button>
               </>
             )}
@@ -183,7 +223,7 @@ const Navbar = ({ currentPage, onNavigate }) => {
               </button>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 text-indigo-100 hover:text-white hover:bg-indigo-700"
+                className="w-full text-left px-4 py-2 rounded-lg transition flex items-center space-x-2 text-gray-600 hover:bg-primary/10 hover:text-primary"
               >
                 <LogOut className="w-5 h-5" />
                 <span>Logout</span>

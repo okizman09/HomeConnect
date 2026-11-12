@@ -12,6 +12,7 @@ yarn.lock
 .env.local
 .env.*.local
 .env.production.local
+HomeConnect.env
 
 # IDE and editor files
 .vscode/

@@ -86,7 +86,7 @@ const AppContent = () => {
         return <ChatsPage />;
       case 'dashboard':
         if (user.role === 'landlord') {
-          return <LandlordDashboard onNavigate={setCurrentPage} />;
+          return <LandlordDashboard onNavigate={setCurrentPage} onSelectListing={setSelectedListing} />;
         } else if (user.role === 'tenant') {
           return <TenantDashboard onNavigate={setCurrentPage} />;
         }
@@ -100,7 +100,7 @@ const AppContent = () => {
       default:
         // Default page based on role
         if (user.role === 'landlord') {
-          return <LandlordDashboard onNavigate={setCurrentPage} />;
+          return <LandlordDashboard onNavigate={setCurrentPage} onSelectListing={setSelectedListing} />;
         }
         return <ListingsPage onSelectListing={setSelectedListing} />;
     }

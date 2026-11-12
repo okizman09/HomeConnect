@@ -1,10 +1,52 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const fs = require('fs');
 const path = require('path');
-const pdf = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Models to try in order: primary alias first, then pinned fallbacks.
+// Override with a comma-separated GEMINI_MODELS env var.
+const GEMINI_MODELS = (process.env.GEMINI_MODELS
+    ? process.env.GEMINI_MODELS.split(',').map(s => s.trim()).filter(Boolean)
+    : ['gemini-flash-latest', 'gemini-flash-lite-latest']
+);
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+class AIServiceError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'AIServiceError';
+        this.statusCode = 502;
+    }
+}
+
+// Call generateContent with per-model retries and fallback across models.
+// Retries transient failures (429/5xx, network errors); anything else throws.
+const generateWithFallback = async (parts, { triesPerModel = 2 } = {}) => {
+    let lastError;
+    for (const name of GEMINI_MODELS) {
+        for (let attempt = 1; attempt <= triesPerModel; attempt++) {
+            try {
+                const result = await genAI.getGenerativeModel({ model: name }).generateContent(parts);
+                const response = await result.response;
+                return response.text();
+            } catch (error) {
+                lastError = error;
+                const status = error && error.status;
+                const retryable = status === 429 || (status >= 500 && status <= 599) || status === undefined;
+                console.error(`Gemini ${name} attempt ${attempt} failed:`, (error && error.message) || error);
+                if (!retryable) break;
+                await sleep(1000 * attempt);
+            }
+        }
+    }
+    throw lastError;
+};
+
+const stripCodeFences = (text) => text.replace(/```json/g, '').replace(/```/g, '').trim();
 
 const getPolicyContent = async (filename) => {
     try {
@@ -23,32 +65,27 @@ const aiService = {
      * @returns {Object} { category, urgency, recommendedAction }
      */
     classifyMaintenance: async (description) => {
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
         const prompt = `
         You are an AI assistant for a property management platform.
         Analyze the following maintenance request and provide a structured classification.
-        
+
         Request: "${description}"
-        
+
         Return ONLY a JSON object with these keys:
         - "category": (e.g., Plumbing, Electrical, HVAC, Appliance, Structural, Other)
         - "urgency": (High, Medium, Low)
         - "recommended_action": (Immediate advice for the tenant)
-        
+
         JSON:
         `;
 
         try {
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            const text = await generateWithFallback(prompt);
             // Clean up markdown code blocks if present
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+            return JSON.parse(stripCodeFences(text));
         } catch (error) {
             console.error("Gemini Maintenance Error:", error);
-            // Fallback
+            // Fallback so request creation survives AI outages
             return { category: "General", urgency: "Medium", recommended_action: "Contact landlord." };
         }
     },
@@ -59,41 +96,55 @@ const aiService = {
      * @returns {Object} Extracted lease details
      */
     analyzeLeaseDocument: async (fileBuffer) => {
+        let textContent;
         try {
-            const data = await pdf(fileBuffer);
-            const textContent = data.text;
+            const parser = new PDFParse({ data: fileBuffer });
+            try {
+                const data = await parser.getText();
+                textContent = data.text;
+            } finally {
+                await parser.destroy().catch(() => { });
+            }
+        } catch (error) {
+            console.error("Lease PDF parse error:", error);
+            const badPdf = new Error("Could not read text from the uploaded PDF. Please upload a valid, text-based PDF file.");
+            badPdf.statusCode = 400;
+            throw badPdf;
+        }
 
-            // Truncate to avoid token limits if necessary (approx 30k chars is safe for simple models, Gemini Pro handles more)
-            const truncatedText = textContent.substring(0, 30000);
+        if (!textContent || !textContent.trim()) {
+            const empty = new Error("The uploaded PDF contains no readable text.");
+            empty.statusCode = 400;
+            throw empty;
+        }
 
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-            const prompt = `
-            Analyze the following text from a lease agreement.
-            
-            Text:
-            """
-            ${truncatedText}
-            """
-            
-            Extract the following information in a valid JSON format:
-            - "monthly_rent": (Amount per month)
-            - "lease_duration": (Length of lease)
-            - "security_deposit": (Amount)
-            - "notice_period": (Time required to end lease)
-            - "risky_clauses": (Array of strings summarizing any unusual or strict clauses)
-            
-            JSON:
-            `;
+        // Truncate to avoid token limits if necessary (approx 30k chars is safe for simple models, Gemini Pro handles more)
+        const truncatedText = textContent.substring(0, 30000);
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            return JSON.parse(jsonStr);
+        const prompt = `
+        Analyze the following text from a lease agreement.
 
+        Text:
+        """
+        ${truncatedText}
+        """
+
+        Extract the following information in a valid JSON format:
+        - "monthly_rent": (Amount per month)
+        - "lease_duration": (Length of lease)
+        - "security_deposit": (Amount)
+        - "notice_period": (Time required to end lease)
+        - "risky_clauses": (Array of strings summarizing any unusual or strict clauses)
+
+        JSON:
+        `;
+
+        try {
+            const text = await generateWithFallback(prompt);
+            return JSON.parse(stripCodeFences(text));
         } catch (error) {
             console.error("Gemini Lease Analysis Error:", error);
-            throw new Error("Failed to analyze lease document.");
+            throw new AIServiceError("Lease analysis is temporarily unavailable. Please try again shortly.");
         }
     },
 
@@ -103,8 +154,6 @@ const aiService = {
      * @returns {string} The AI response
      */
     chatAssistant: async (userMessage) => {
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
         // Load context
         const handbook = await getPolicyContent('TenantHandbook.md');
         const faqs = await getPolicyContent('FAQs.md');
@@ -129,12 +178,10 @@ const aiService = {
         `;
 
         try {
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            return response.text();
+            return await generateWithFallback(prompt);
         } catch (error) {
             console.error("Gemini Chat Error:", error);
-            return "I'm having trouble connecting to the service right now. Please try again later.";
+            throw new AIServiceError("The AI assistant is temporarily unavailable. Please try again shortly.");
         }
     },
 
@@ -145,8 +192,6 @@ const aiService = {
      * @returns {Object} { isValid: boolean, reason: string }
      */
     validatePropertyImage: async (fileBuffer, mimeType) => {
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
         const prompt = `
         Analyze this image. I need to verify if it is a suitable photo for a real estate listing.
         
@@ -170,11 +215,8 @@ const aiService = {
         };
 
         try {
-            const result = await model.generateContent([prompt, imagePart]);
-            const response = await result.response;
-            const text = response.text();
-            const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
-            const analysis = JSON.parse(jsonStr);
+            const text = await generateWithFallback([prompt, imagePart]);
+            const analysis = JSON.parse(stripCodeFences(text));
 
             if (analysis.is_property && analysis.is_good_quality) {
                 return { isValid: true };
